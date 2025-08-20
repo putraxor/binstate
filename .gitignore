@@ -7,6 +7,7 @@
 pubspec.lock
 
 
+publish.sh
 example/*.gz
 example/*.bin
 example/*.json
