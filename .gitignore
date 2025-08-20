@@ -7,6 +7,7 @@
 pubspec.lock
 
 
+example/*.gz
 example/*.bin
 example/*.json
 .DS_Store

@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:binstate/binstate.dart';
 
 class Point implements BinarySerializable {
@@ -10,9 +9,9 @@ class Point implements BinarySerializable {
 
   @override
   void serialize(BinaryCodec codec) {
-    for (var desc in getPropertyDescriptors()) {
-      desc.writer(this, codec);
-    }
+    codec.writeInt(x); // Tulis x secara langsung
+    codec.writeInt(y); // Tulis y secara langsung
+    print('Serialized Point: x=$x, y=$y'); // Debug
   }
 
   @override
@@ -32,17 +31,13 @@ class Point implements BinarySerializable {
   ];
 
   static Point deserialize(BinaryCodec codec) {
-    final descriptors = Point(0, 0).getPropertyDescriptors();
-    final values = <String, dynamic>{};
-    for (var desc in descriptors) {
-      values[desc.name] = desc.reader(codec);
-    }
-    return Point(values['x'], values['y']);
+    final x = codec.readInt();
+    final y = codec.readInt();
+    print('Deserialized Point: x=$x, y=$y'); // Debug
+    return Point(x, y);
   }
 
-  Map<String, dynamic> toJson() {
-    return {'x': x, 'y': y};
-  }
+  Map<String, dynamic> toJson() => {'x': x, 'y': y};
 }
 
 class RobotState extends BinaryState {
@@ -125,7 +120,10 @@ class RobotState extends BinaryState {
       name: 'point',
       type: Point,
       reader: (codec) => Point.deserialize(codec),
-      writer: (obj, codec) => codec.writeObject((obj as RobotState).point, (p, c) => p.serialize(c)),
+      writer: (obj, codec) {
+        final p = (obj as RobotState).point;
+        p.serialize(codec); // Pastikan serialize dipanggil
+      },
     ),
   ];
 
@@ -155,18 +153,16 @@ class RobotState extends BinaryState {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'positionX': positionX,
-      'positionY': positionY,
-      'isActive': isActive,
-      'name': name,
-      'coordinates': coordinates,
-      'commandLog': commandLog,
-      'point': point.toJson(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'positionX': positionX,
+    'positionY': positionY,
+    'isActive': isActive,
+    'name': name,
+    'coordinates': coordinates,
+    'commandLog': commandLog,
+    'point': point.toJson(),
+  };
 }
 
 void main(List<String> arguments) async {
@@ -180,12 +176,11 @@ void main(List<String> arguments) async {
     positionY: 20.3,
     isActive: true,
     name: null,
-    coordinates: List.generate(10_000, (index) => 1),
+    coordinates: List.generate(10, (index) => 1.0),
     commandLog: ["move_forward", null, "stop"],
     point: Point(5, 10),
   );
 
-  //Also save to json for comparison
   final jsonFilename = 'robot_state.json';
   final jsonFile = File(jsonFilename);
   if (await jsonFile.exists()) {
@@ -194,10 +189,11 @@ void main(List<String> arguments) async {
   await jsonFile.writeAsString(robot.toJson().toString());
 
   final stopwatch = Stopwatch()..start();
-  await robot.saveToFile(filename, compress: true);
+  await robot.saveToFile(filename, compress: enableCompression);
   print('Save time: ${stopwatch.elapsedMicroseconds} µs');
   stopwatch.reset();
-  final loadedRobot = await BinaryState.loadFromFile(filename, RobotState.deserialize, compress: true) as RobotState;
+  final loadedRobot =
+      await BinaryState.loadFromFile(filename, RobotState.deserialize, compress: enableCompression) as RobotState;
   print('Load time: ${stopwatch.elapsedMicroseconds} µs');
 
   print('ID: ${loadedRobot.id}');
@@ -211,7 +207,6 @@ void main(List<String> arguments) async {
 
   print('-' * 40);
   print('Comparison with JSON:');
-  //get the size of the binary file
   final binaryFile = File(filename);
   final binarySize = await binaryFile.length();
   print('Binary file size: $binarySize bytes');
