@@ -1,6 +1,6 @@
 name: binstate
 description: A Dart library for efficient binary serialization of state objects.
-version: 1.0.1
+version: 1.0.2
 repository: https://github.com/putraxor/binstate
 
 environment:

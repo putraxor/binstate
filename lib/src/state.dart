@@ -4,7 +4,7 @@ part of '../binstate.dart';
 // Interface untuk objek yang bisa diserialisasi
 abstract class BinarySerializable {
   void serialize(BinaryCodec codec);
-  List<PropertyDescriptor> getPropertyDescriptors();
+  List<PropertyDescriptor> get propertyDescriptors;
 }
 
 // Abstrak untuk state yang diserialisasi dalam biner
@@ -26,7 +26,7 @@ abstract class BinaryState implements BinarySerializable {
       await file.delete();
     }
     final binary = toBinary();
-    final data = compress ? GZipEncoder().encode(binary) : binary; // Fallback ke binary jika encode gagal
+    final data = compress ? GZipEncoder().encode(binary) : binary;
     await file.writeAsBytes(data);
   }
 

@@ -15,7 +15,7 @@ class Point implements BinarySerializable {
   }
 
   @override
-  List<PropertyDescriptor> getPropertyDescriptors() => [
+  List<PropertyDescriptor> get propertyDescriptors => [
     PropertyDescriptor(
       name: 'x',
       type: int,
@@ -63,13 +63,13 @@ class RobotState extends BinaryState {
 
   @override
   void serialize(BinaryCodec codec) {
-    for (var desc in getPropertyDescriptors()) {
+    for (var desc in propertyDescriptors) {
       desc.writer(this, codec);
     }
   }
 
   @override
-  List<PropertyDescriptor> getPropertyDescriptors() => [
+  List<PropertyDescriptor> get propertyDescriptors => [
     PropertyDescriptor(
       name: 'id',
       type: int,
@@ -130,17 +130,14 @@ class RobotState extends BinaryState {
   static RobotState deserialize(BinaryCodec codec) {
     final descriptors = RobotState(
       id: 0,
-      positionX: 0,
-      positionY: 0,
+      positionX: 0.0,
+      positionY: 0.0,
       isActive: false,
       coordinates: [],
       commandLog: [],
       point: Point(0, 0),
-    ).getPropertyDescriptors();
-    final values = <String, dynamic>{};
-    for (var desc in descriptors) {
-      values[desc.name] = desc.reader(codec);
-    }
+    ).propertyDescriptors;
+    final values = descriptors.read(codec);
     return RobotState(
       id: values['id'],
       positionX: values['positionX'],
